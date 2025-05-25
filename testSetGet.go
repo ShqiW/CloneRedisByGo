@@ -2,41 +2,41 @@ package main
 
 import (
     "fmt"
-    "github.com/ShqiW/CloneRedisByGo/internal/storage"
+    "github.com/ShqiW/CloneRedisByGo/internal/storage"   // 改成你的实际模块名
+    "github.com/ShqiW/CloneRedisByGo/internal/commands"  // 改成你的实际模块名
 )
 
-
-func HandleSet(store storage.Storage, key, value string) string {
-    err := store.Set(key, value)
-    if err != nil {
-        return fmt.Sprintf("-ERR %s\r\n", err.Error())
-    }
-    return "+OK\r\n"
-}
-
-func HandleGet(store storage.Storage, key string) string {
-    value, exists := store.Get(key)
-    if !exists {
-        return "$-1\r\n"  // nil
-    }
-    return fmt.Sprintf("$%d\r\n%s\r\n", len(value), value)
-}
-
 func main() {
-    // create memory storage
+    // 创建内存存储
     store := storage.NewMemoryStorage()
     
-    // test SET
-    fmt.Println("测试 SET 命令:")
-    result := HandleSet(store, "name", "GoRedis")
+    // 创建命令处理器
+    handler := commands.NewHandler(store)
+    
+    fmt.Println("=== GoRedis SET/GET 测试 ===")
+    
+    // 测试 SET 命令
+    fmt.Println("\n测试 SET 命令:")
+    result := handler.Execute([]string{"SET", "name", "GoRedis"})
     fmt.Printf("SET name GoRedis => %s", result)
     
-    // test GET
+    result = handler.Execute([]string{"SET", "version", "1.0"})
+    fmt.Printf("SET version 1.0 => %s", result)
+    
+    // 测试 GET 命令
     fmt.Println("\n测试 GET 命令:")
-    result = HandleGet(store, "name")
+    result = handler.Execute([]string{"GET", "name"})
     fmt.Printf("GET name => %s", result)
     
-    // test non-existent key
-    result = HandleGet(store, "notexist")
+    result = handler.Execute([]string{"GET", "version"})
+    fmt.Printf("GET version => %s", result)
+    
+    // 测试不存在的键
+    result = handler.Execute([]string{"GET", "notexist"})
     fmt.Printf("GET notexist => %s", result)
+    
+    // 测试 PING
+    fmt.Println("\n测试 PING 命令:")
+    result = handler.Execute([]string{"PING"})
+    fmt.Printf("PING => %s", result)
 }
